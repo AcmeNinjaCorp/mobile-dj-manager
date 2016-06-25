@@ -15,7 +15,8 @@ if ( ! defined( 'ABSPATH' ) )
  * Calculate the travel distance
  *
  * @since	1.3.8
- * @param	int|obj		$event	The event ID or the event MDJM_Event class object.
+ * @param	int|obj		$event		The event ID or the event MDJM_Event class object.
+ * @param	int			$venue_id	The venue ID.
  * @return	str			The distance to the event venue or an empty string
  */
 function mdjm_travel_get_distance( $event = '', $venue_id = '' )	{
@@ -133,8 +134,8 @@ function mdjm_travel_build_url( $start, $destination )	{
 
 	$url = add_query_arg( array(
 		'units'        => $units,
-		'origins'      => urlencode( $start ),
-		'destinations' => urlencode( $destination ),
+		'origins'      => str_replace( '%2C', ',', urlencode( $start ) ),
+		'destinations' => str_replace( '%2C', ',', urlencode( $destination ) ),
 		'mode'         => $mode,
 		//'key'          => $api_key
 		),
