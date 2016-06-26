@@ -1135,6 +1135,14 @@ function mdjm_get_registered_settings()	{
 						'type'        => 'text',
 						'std'         => mdjm_get_employee_post_code( 1 )
 					),
+					'travel_status' => array(
+						'id'          => 'travel_status',
+						'name'        => sprintf( __( '%s Status', 'mobile-dj-manager' ), mdjm_get_label_singular() ),
+						'desc'        => sprintf( __( "CTRL (cmd on MAC) + Click to select which %s status' can have travel costs updated.", 'mobile-dj-manager' ), mdjm_get_label_singular( true ) ),
+						'type'        => 'multiple_select',
+						'options'     => mdjm_all_event_status(),
+						'std'         => array( 'mdjm-unattended', 'mdjm-enquiry', 'mdjm-contract' )
+					),
 					'travel_units' => array(
 						'id'          => 'travel_units',
 						'name'        => __( 'Calculate in?', 'mobile-dj-manager' ),

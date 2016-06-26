@@ -1259,34 +1259,36 @@ function mdjm_time_until_event( $event_id )	{
  * @return	mixed	See get_post_meta()
  */
 function mdjm_update_event_meta( $event_id, $data )	{
-
-	do_action( 'mdjm_pre_update_event_meta', $event_id, $data );
 	
 	// For backwards compatibility
 	$current_meta = get_post_meta( $event_id );
-	
+
+	do_action( 'mdjm_pre_update_event_meta', $event_id, $data, $current_meta );
+
+	$data = apply_filters( 'mdjm_update_event_meta_data', $data, $event_id, $current_meta );
+
 	$debug = array();
 	$meta  = get_post_meta( $event_id, '_mdjm_event_data', true );
 	
 	foreach( $data as $key => $value )	{
 		
-		if( $key == 'mdjm_nonce' || $key == 'mdjm_action' || substr( $key, 0, 12 ) != '_mdjm_event_' ) {
+		if ( $key == 'mdjm_nonce' || $key == 'mdjm_action' || substr( $key, 0, 12 ) != '_mdjm_event_' ) {
 			continue;
 		}
 		
-		if( $key == '_mdjm_event_cost' || $key == '_mdjm_event_deposit' || $key == '_mdjm_event_dj_wage' )	{
-			$value = mdjm_format_amount( $value );			
-		} elseif( $key == '_mdjm_event_venue_postcode' && ! empty( $value ) )	{ // Postcodes are uppercase.
+		if ( $key == '_mdjm_event_cost' || $key == '_mdjm_event_deposit' || $key == '_mdjm_event_dj_wage' || $key == '_mdjm_event_travel_cost' )	{
+			$value = mdjm_sanitize_amount( $value );			
+		} elseif ( $key == '_mdjm_event_venue_postcode' && ! empty( $value ) )	{ // Postcodes are uppercase.
 			$value = strtoupper( $value );
-		} elseif( $key == '_mdjm_event_venue_email' && ! empty( $value ) )	{ // Emails are lowercase.
+		} elseif ( $key == '_mdjm_event_venue_email' && ! empty( $value ) )	{ // Emails are lowercase.
 			$value = strtolower( $value );
-		} elseif( $key == '_mdjm_event_package' && ! empty( $value ) )	{
+		} elseif ( $key == '_mdjm_event_package' && ! empty( $value ) )	{
 			$value = sanitize_text_field( strtolower( $value ) );	
-		} elseif( $key == '_mdjm_event_addons' && ! empty( $value ) )	{
+		} elseif ( $key == '_mdjm_event_addons' && ! empty( $value ) )	{
 			$value = $value;
-		} elseif( ! strpos( $key, 'notes' ) && ! empty( $value ) )	{
+		} elseif ( ! strpos( $key, 'notes' ) && ! empty( $value ) )	{
 			$value = sanitize_text_field( ucwords( $value ) );
-		} elseif( ! empty( $value ) )	{
+		} elseif ( ! empty( $value ) )	{
 			$value = sanitize_text_field( ucfirst( $value ) );
 		} else	{
 			$value = '';
@@ -1326,7 +1328,8 @@ function mdjm_update_event_meta( $event_id, $data )	{
 		'user_id'          => is_user_logged_in() ? get_current_user_id() : 1,
 		'event_id'         => $event_id,
 		'comment_content'  => sprintf( __( '%s Updated', 'mobile-dj-manager' ) . ':<br />    %s',
-								mdjm_get_label_singular(), implode( '<br />', $debug ) ),
+			mdjm_get_label_singular(), implode( '<br />', $debug )
+		),
 		'comment_type'     => 'update-event'
 	);
 	

@@ -98,7 +98,7 @@ function mdjm_get_travel_cost( $distance )	{
 
 	if ( $round )	{
 
-		$nearest   = mdjm_get_option( 'travel_round_to' );
+		$nearest = mdjm_get_option( 'travel_round_to' );
 	
 		if ( intval( $cost ) == $cost && ! is_float( intval( $cost ) / $nearest ) )	{
 			$cost = intval( $cost );
@@ -106,7 +106,7 @@ function mdjm_get_travel_cost( $distance )	{
 			if ( $round == 'up' )	{
 				$cost = round( ( $cost + $nearest / 2 ) / $nearest ) * $nearest;
 			} else	{
-				$cost = ceil;
+				$cost = floor( ( $cost + $nearest / 2 ) / $nearest ) * $nearest;
 			}
 		}
 
@@ -254,3 +254,73 @@ function mdjm_travel_unit_label( $singular = false, $lowercase = true )	{
 	return apply_filters( 'mdjm_travel_unit_label', $return );
 
 } // mdjm_travel_unit_label
+
+/**
+ * Adds the travel cost to the event.
+ *
+ * @since	1.3.8
+ * @param	arr		$data			Array of meta values being updated.
+ * @param	arr		$current_meta	Array of existing meta values.
+ * @param	int		$event_id		The event ID.
+ * @return	arr		$data			Filtered array of meta values being updated.
+ */
+function mdjm_add_travel_cost_to_event( $data, $current_meta, $event_id )	{
+
+	if ( ! mdjm_get_option( 'travel_add_cost' ) )	{
+		return $data;
+	}
+
+	$travel_status = mdjm_get_option( 'travel_status' );
+
+	if ( empty( $travel_status ) )	{
+		return $data;
+	}
+
+	$mdjm_event = new MDJM_Event( $event_id );
+
+	if ( ! is_array( $travel_status ) || ! in_array( $mdjm_event->post_status, $travel_status ) )	{
+		return $data;
+	}
+
+	if ( isset( $current_meta['_mdjm_event_venue_id'] ) )	{
+		$current_venue = $current_meta['_mdjm_event_venue_id'][0];
+	} else	{
+		$current_venue = $mdjm_event->get_venue_id();
+	}
+
+	if ( isset( $current_meta['_mdjm_event_travel_cost'] ) )	{
+		$travel = $current_meta['_mdjm_event_travel_cost'][0];
+	} else	{
+		$travel = '0.00';
+	}
+
+	$venue_id = isset( $data['_mdjm_event_venue_id'] ) ? $data['_mdjm_event_venue_id'] : false;
+	$price    = isset( $data['_mdjm_event_cost'] )     ? $data['_mdjm_event_cost']     : '0.00';
+
+	if ( $current_venue == $venue_id && isset( $current_meta['_mdjm_event_travel_cost'] ) )	{
+		if ( 'manual' != strtolower( $venue_id ) )	{
+			return $data;
+		}
+	}
+
+	// If an existing travel cost exists, subtract from the event cost.
+	$price = $price - $travel;
+
+	if ( $venue_id )	{
+		$travel_data = mdjm_travel_get_distance( $event_id, $venue_id );
+	}
+
+	$travel = ! empty( $travel_data ) ? mdjm_get_travel_cost( $travel_data['distance'] ) : '0.00';
+	error_log( $travel, 0 );
+
+	$price = $price + $travel;
+
+	// Filter and return values
+	$data['_mdjm_event_cost']        = $price;
+	$data['_mdjm_event_deposit']     = mdjm_calculate_deposit( $price );
+	$data['_mdjm_event_travel_cost'] = $travel;
+
+	return $data;
+
+} // mdjm_add_travel_cost_to_event
+add_filter( 'mdjm_update_event_meta_data', 'mdjm_add_travel_cost_to_event', 5, 3 );
