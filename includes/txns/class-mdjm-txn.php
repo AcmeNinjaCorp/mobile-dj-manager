@@ -47,14 +47,7 @@ class MDJM_Txn {
 	 * @since	1.3
 	 */
 	public $recipient_id = 0;
-
-	/**
-	 * The transaction currency
-	 *
-	 * @since	1.3.8
-	 */
-	public $currency;
-
+		
 	/**
 	 * Declare the default properities in WP_Post as we can't extend it
 	 * Anything we've delcared above has been removed.
@@ -120,8 +113,7 @@ class MDJM_Txn {
 					break;
 			}
 		}
-
-		$this->get_currency();
+		
 		$this->get_price();
 		$this->get_recipient_id();
 				
@@ -223,21 +215,7 @@ class MDJM_Txn {
 	public function get_date() {
 		return $this->post_date;
 	} // get_date
-
-	/**
-	 * Retrieve the transaction currency
-	 *
-	 * @since	1.3.8
-	 * @return	str
-	 */
-	public function get_currency() {
-		if ( empty( $this->currency ) )	{
-			$this->currency = get_post_meta( $this->ID, '_mdjm_txn_currency', true );
-		}
-		
-		return strtoupper( $this->currency );
-	} // get_currency
-
+	
 	/**
 	 * Retrieve the transaction price
 	 *
@@ -291,21 +269,5 @@ class MDJM_Txn {
 					
 		return apply_filters( 'mdjm_transaction_type', $return, $this->ID );
 	} // get_type
-<<<<<<< HEAD
 	
-=======
-
-	/**
-	 * Retrieve the transaction gateway.
-	 *
-	 * @since	1.3.8
-	 * @return	str
-	 */
-	public function get_gateway() {			
-		$gateway = get_post_meta( $this->ID, '_mdjm_txn_gateway', true );
-					
-		return apply_filters( 'mdjm_transaction_gateway', $gateway, $this->ID );
-	} // get_gateway
-
->>>>>>> master
 } // class MDJM_Txn

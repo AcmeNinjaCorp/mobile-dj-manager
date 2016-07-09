@@ -66,9 +66,6 @@ function mdjm_get_template_files() {
 		'login' => array(
 			'login-form.php'
 		),
-		'payments' => array(
-			'payments.php'
-		),
 		'playlist' => array(
 			'playlist-client.php',
 			'playlist-guest.php',
