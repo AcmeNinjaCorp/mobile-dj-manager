@@ -617,7 +617,7 @@ class MDJM_Event {
 		 *
 		 * @since	1.3.7
 		 *
-		 * @param	str		$package The event price.
+		 * @param	str		$package The event package.
 		 */
 		return apply_filters( 'mdjm_event_package', $package, $this->ID );
 	} // get_package
@@ -636,7 +636,7 @@ class MDJM_Event {
 		 *
 		 * @since	1.3.7
 		 *
-		 * @param	str		$package The event price.
+		 * @param	str		$package The event package.
 		 */
 		return apply_filters( 'mdjm_event_addons', $addons, $this->ID );
 	} // get_addons
@@ -781,7 +781,7 @@ class MDJM_Event {
 
 				$this->deposit_status = 'Due';
 				
-				if ( $this->get_total_income() >= $this->get_deposit() )	{
+				if ( mdjm_sanitize_amount( $this->get_total_income() ) >= mdjm_sanitize_amount( $this->get_deposit() ) )	{
 					
 					$this->deposit_status = 'Paid';
 					
@@ -826,7 +826,7 @@ class MDJM_Event {
 
 				$this->balance_status ='Due';
 
-				if ( $this->get_total_income() >= $this->get_price() )	{
+				if ( mdjm_sanitize_amount( $this->get_total_income() ) >= mdjm_sanitize_amount( $this->get_price() ) )	{
 					
 					$this->balance_status = 'Paid';
 					
@@ -866,15 +866,10 @@ class MDJM_Event {
 		if ( ! isset( $this->balance ) ) {
 			
 			$income = $this->get_total_income();
-			
-			if ( ! empty( $this->income ) && $this->income != '0.00' )	{
-				
-				$this->balance = ( $this->get_price() - $this->income );
-				
-			} else	{
-				
-				$this->balance = $this->get_price();
-				
+
+			$this->balance = $this->price;
+			if ( ! empty( $income ) )	{
+				$this->balance = $this->price - $income;
 			}
 			
 		}
@@ -898,18 +893,20 @@ class MDJM_Event {
 	 */
 	public function get_total_income()	{
 		if ( ! isset( $this->income ) )	{
-			
-			$rcvd = MDJM()->txns->get_transactions( $this->ID, 'mdjm-income' );
-			
-			if ( ! empty ( $rcvd ) )	{
-				
-				$this->income = mdjm_sanitize_amount( $rcvd );
-				
-			} else	{
-				
-				$this->income = '0.00';
+
+			$this->income = '0.00';
+			$txns         = mdjm_get_event_txns( $this->ID, array( 'post_status' => 'mdjm-income' ) );
+
+			if ( ! empty ( $txns ) )	{
+
+				foreach ( $txns as $txn )	{
+					$mdjm_txn = new MDJM_Txn( $txn->ID );
+
+					$this->income += $mdjm_txn->price;
+				}
 				
 			}
+
 		}
 		
 		/**
@@ -931,18 +928,20 @@ class MDJM_Event {
 	 */
 	public function get_total_outgoings()	{
 		if ( ! isset( $this->outgoings ) )	{
-			
-			$out = MDJM()->txns->get_transactions( $this->ID, 'mdjm-expenditure' );
-			
-			if ( ! empty ( $out ) )	{
-				
-				$this->outgoings = $out;
-				
-			} else	{
-				
-				$this->outgoings = '0.00';
-				
+
+			$this->outgoings = '0.00';
+			$txns         = mdjm_get_event_txns( $this->ID, array( 'post_status' => 'mdjm-expenditure' ) );
+
+			if ( ! empty ( $txns ) )	{
+
+				foreach ( $txns as $txn )	{
+					$mdjm_txn = new MDJM_Txn( $txn->ID );
+
+					$this->outgoings += $mdjm_txn->price;
+				}
+
 			}
+
 		}
 		
 		/**
